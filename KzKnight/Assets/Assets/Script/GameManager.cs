@@ -1,18 +1,33 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.SceneManagement;
+using Photon.Pun;
 
-public class GameManager : MonoBehaviour
+public class GameManager : MonoBehaviourPunCallbacks
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] GameObject playerPrefab;
+    [SerializeField] GameObject weaponPrefab;
+
+    private float minX = -7f, maxX = 7f, minY = -5f, maxY = 7f;
+
+    public override void OnEnable()
     {
-        
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
-    // Update is called once per frame
-    void Update()
+    public override void OnDisable()
     {
-        
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        Debug.Log("đã load Scene");
+        // Chỉ spawn player nếu đối tượng player chưa tồn tại
+        if (PhotonNetwork.IsConnected && playerPrefab != null && weaponPrefab != null)
+        {
+            Vector2 randomPos = new Vector2(Random.Range(minX, maxX), Random.Range(minY, maxY));
+            PhotonNetwork.Instantiate(playerPrefab.name, randomPos, Quaternion.identity);
+            PhotonNetwork.Instantiate(weaponPrefab.name, randomPos, Quaternion.identity);
+        }
     }
 }

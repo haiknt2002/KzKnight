@@ -9,7 +9,7 @@ namespace Assets.Assets.Script.Model
     public class Player
     {
         public string Name { get; set; }
-        public float HP { get; }
+        public float HP { get; set; }
         public string Status { get; set; }
         public float Speed { get; set; }
 

@@ -1,4 +1,5 @@
 ﻿using Assets.Assets.Script.Model;
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    public Player player;
+    private PhotonView view;
     enum PlayerState
     {
         Stand,
@@ -24,39 +25,54 @@ public class PlayerController : MonoBehaviour
 
     private bool facingRight = true;
 
+    float HP = 100f;
+
+
     void Start()
     {
-        // Khởi tạo thuộc tính Player ban đầu
-        this.player = new Player();
-
-        this.speed = player.Speed;
+        view = GetComponent<PhotonView>();
         rb = GetComponent<Rigidbody2D>();
-        anim = rb.GetComponent<Animator>();
+        anim = GetComponent<Animator>();
+
     }
 
     void Update()
     {
-        // Lấy input từ bàn phím
-        movement.x = Input.GetAxisRaw("Horizontal"); // A, D hoặc ←, →
-        movement.y = Input.GetAxisRaw("Vertical");   // W, S hoặc ↑, ↓
-
-        // Xoay nhân vật trái - phải
-        RotatePlayerToMouse();
-
-        // Cập nhật trạng thái dựa trên input
-        if (movement.magnitude > 0)
+        if(view.IsMine)
         {
-            currentState = PlayerState.Run;
+            // Lấy input từ bàn phím
+            movement.x = Input.GetAxisRaw("Horizontal"); // A, D hoặc ←, →
+            movement.y = Input.GetAxisRaw("Vertical");   // W, S hoặc ↑, ↓
+
+            // Xoay nhân vật trái - phải
+            RotatePlayerToMouse();
+
+            // Cập nhật trạng thái dựa trên input
+            if (movement.magnitude > 0)
+            {
+                currentState = PlayerState.Run;
+            }
+            else
+            {
+                currentState = PlayerState.Stand;
+            }
+
+            // Gửi trạng thái mới cho Animator
+            anim.SetInteger("PLayerState", (int)currentState);
+
+            if (HP < 0) { this.currentState = PlayerState.Dead; Die(); }
         }
-        else
+    }
+    [PunRPC]
+    public void TakeDamage(float damage)
+    {
+        HP -= damage;
+        Debug.Log("Nhận sát thương: " + damage + " | HP còn lại: " + HP);
+
+        if (HP <= 0)
         {
-            currentState = PlayerState.Stand;
+            Die();
         }
-
-        // Gửi trạng thái mới cho Animator
-        anim.SetInteger("PLayerState", (int)currentState);
-
-        if(player.HP < 0) { this.currentState = PlayerState.Dead; Die(); }
     }
     void RotatePlayerToMouse()
     {
@@ -85,7 +101,7 @@ public class PlayerController : MonoBehaviour
         localScale.x = -localScale.x;  // Lật sprite
         transform.localScale = localScale;
     }
-
+    
     void FixedUpdate()
     {
         // Di chuyển nhân vật
@@ -97,4 +113,9 @@ public class PlayerController : MonoBehaviour
         anim.SetInteger("PLayerState", (int)currentState);
         rb.velocity = Vector2.zero; // Dừng di chuyển khi chết
     }
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+
+    }
+
 }

@@ -1,32 +1,44 @@
-﻿using UnityEngine;
+﻿using Photon.Pun;
+using UnityEngine;
 
-public class WeaponController : MonoBehaviour
+public class WeaponController : MonoBehaviourPunCallbacks
 {
+    private GameObject Player;
     [Header("Tham chiếu đối tượng")]
-    public Transform player;         // Transform của nhân vật (để weapon đi theo)
+    private Transform player;         // Transform của nhân vật (để weapon đi theo)
     public Transform firePoint;      // FirePoint nằm ở đầu weapon (nơi bắn đạn)
     public GameObject bulletPrefab;   // Prefab của viên đạn
-
+    public PhotonView view;
     [Header("Cài đặt")]
     public float rotationSpeed = 500f;   // Tốc độ xoay của weapon
     public Vector3 offset;               // Offset từ vị trí của nhân vật đến weapon (nếu cần)
 
     private bool facingRight = true;     // Trạng thái facing của weapon (theo nhân vật)
 
+    private void Start()
+    {
+        view = this.GetComponent<PhotonView>();
+        Player = GameObject.FindGameObjectWithTag("Player");
+        player = Player.transform;
+    }
     void Update()
     {
-        // 1. Cập nhật vị trí weapon theo nhân vật (với offset nếu cần)
-        transform.position = player.position + offset;
-
-        // 2. Flip weapon dựa vào vị trí chuột so với nhân vật
-        UpdateFacingDirection();
-
-        // 3. Xoay weapon sao cho "đầu" (firePoint) luôn hướng về phía chuột
-        RotateWeaponToMouse();
-        if (Input.GetButtonDown("Fire1"))
+        if(view.IsMine)
         {
-            FireBullet();
+            // 1. Cập nhật vị trí weapon theo nhân vật (với offset nếu cần)
+            transform.position = player.position + offset;
+
+            // 2. Flip weapon dựa vào vị trí chuột so với nhân vật
+            UpdateFacingDirection();
+
+            // 3. Xoay weapon sao cho "đầu" (firePoint) luôn hướng về phía chuột
+            RotateWeaponToMouse();
+            if (Input.GetButtonDown("Fire1"))
+            {
+                FireBullet();
+            }
         }
+        
     }
     /// <summary>
     /// Tạo và bắn viên đạn theo hướng firePoint.
@@ -34,7 +46,7 @@ public class WeaponController : MonoBehaviour
     void FireBullet()
     {
         // Tạo viên đạn tại vị trí firePoint với góc quay hiện tại
-        GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+        GameObject bullet = PhotonNetwork.Instantiate(bulletPrefab.name, firePoint.position, Quaternion.identity);
 
         // Thêm lực cho viên đạn để nó bay theo hướng firePoint.right
         Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
@@ -42,7 +54,7 @@ public class WeaponController : MonoBehaviour
         {
             // Nếu weapon facing right, dùng firePoint.right; nếu facing left, dùng -firePoint.right
             Vector2 direction = facingRight ? firePoint.right : -firePoint.right;
-            rb.velocity = direction * 10f;
+            rb.velocity = direction * 20f;
         }
 
         // Hủy viên đạn sau 2 giây

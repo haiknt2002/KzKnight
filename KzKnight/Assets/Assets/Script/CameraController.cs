@@ -5,7 +5,8 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     // Transform của nhân vật mà camera sẽ theo dõi
-    public Transform target;
+    [SerializeField]
+    private Transform target;
     [SerializeField]
     // Offset (khoảng cách giữa camera và nhân vật), có thể điều chỉnh trong Inspector
     private Vector3 offset = new Vector3(0,0,-10);
@@ -16,9 +17,25 @@ public class CameraController : MonoBehaviour
     // Giới hạn Map (điều chỉnh các giá trị này sao cho phù hợp với kích thước Map của bạn)
     private float minX = -7f, maxX = 7f, minY = -5f, maxY = 7f;
 
+    private void Start()
+    {
+
+    }
     // Sử dụng LateUpdate để đảm bảo camera di chuyển sau khi nhân vật đã di chuyển
     void LateUpdate()
     {
+        if (target == null)
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                target = playerObj.transform;
+            }
+            else
+            {
+                Debug.LogError("Không tìm thấy Player trong scene!");
+            }
+        }
         // Tính vị trí mong muốn của camera (vị trí của nhân vật cộng thêm offset)
         Vector3 desiredPosition = target.position + offset;
 
@@ -32,4 +49,5 @@ public class CameraController : MonoBehaviour
         // Cập nhật vị trí của camera
         transform.position = smoothedPosition;
     }
+
 }
